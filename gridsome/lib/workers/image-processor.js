@@ -119,27 +119,24 @@ exports.processImage = async function ({
 }
 
 exports.process = async function ({
-  queue,
+  image,
   context,
   cacheDir,
-  imagesConfig
+  imagesConfig,
 }) {
   await warmupSharp(sharp)
-  await pMap(queue, async set => {
-    const cachePath = cacheDir ? path.join(cacheDir, set.filename) : null
+  
+    const cachePath = cacheDir ? path.join(cacheDir, image.filename) : null
 
     try {
       await exports.processImage({
-        destPath: set.destPath,
-        imagesConfig,
+        ...image,
         cachePath,
-        ...set
-      })
+        imagesConfig,
+      });
     } catch (err) {
-      const relPath = path.relative(context, set.filePath)
+      const relPath = path.relative(context, immage.filePath)
       throw new Error(`Failed to process image ${relPath}. ${err.message}`)
     }
-  }, {
-    concurrency: sysinfo.cpus.logical
-  })
 }
+
