@@ -135,7 +135,7 @@ exports.process = async function ({
         imagesConfig,
       });
     } catch (err) {
-      const relPath = path.relative(context, immage.filePath)
+      const relPath = path.relative(context, image.filePath)
       throw new Error(`Failed to process image ${relPath}. ${err.message}`)
     }
 }
