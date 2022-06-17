@@ -141,30 +141,34 @@ async function processImages (images, config) {
   const { createWorker } = require('./workers')
   const timer = hirestime()
 
-  const concurrency = config.images.concurrency || 4;
-  const worker = createWorker('image-processor', { numWorkers: concurrency });
-  const totalAssets = images.queue.length
+  const concurrency = config.images.concurrency || sysinfo.cpus.physical
+  const worker = createWorker('image-processor', { numWorkers: concurrency })
+  const total = images.queue.length
+  let done = 0
 
-  let progress = 0
-  writeLine(`Processing images (${progress} / ${totalAssets} images) - 0%`)
+  log(`Processing ${total} images... (concurrency: ${concurrency})`)
+
+  const progress = (done,total) => writeLine(`${((done / total) * 100).toFixed(2)}% - Processing images... (${done} / ${total} images)`)
   try {
+    progress(done, total)
+
     await parallel(images.queue, async (image) => {
       await worker.process({
         outputDir: config.outputDir,
         context: config.context,
         cacheDir: config.imageCacheDir,
         imagesConfig: config.images,
-        image,
+        image
       })
-    }, concurrency);
+      progress(done++, total)
+    }, concurrency)
 
-    writeLine(`Processing images (${progress} / ${totalAssets} images) - ${Math.round((++progress) * 100 )}%`)
   } catch (err) {
     throw err
   }
   finally {
-    worker.end();
+    worker.end()
   }
 
-  writeLine(`Images processed! (${progress} / ${totalAssets} images) - ${timer(hirestime.S)}s\n`)
+  writeLine(`Images processed! (${done} / ${total} images) - ${timer(hirestime.S)}s\n`)
 }
