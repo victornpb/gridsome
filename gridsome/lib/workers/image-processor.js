@@ -18,7 +18,8 @@ exports.processImage = async function ({
   imagesConfig,
   options = {}
 }) {
-  if (cachePath && await fs.exists(cachePath)) {
+  // If the image is already processed, copy it to the destination
+  if (cachePath && fs.existsSync(cachePath)) {
     return fs.copy(cachePath, destPath)
   }
 
@@ -121,21 +122,21 @@ exports.process = async function ({
   image,
   context,
   cacheDir,
-  imagesConfig,
+  imagesConfig
 }) {
   await warmupSharp(sharp)
-  
-    const cachePath = cacheDir ? path.join(cacheDir, image.filename) : null
 
-    try {
-      await exports.processImage({
-        ...image,
-        cachePath,
-        imagesConfig,
-      });
-    } catch (err) {
+  const cachePath = cacheDir ? path.join(cacheDir, image.filename) : null
+
+  try {
+    await exports.processImage({
+      ...image,
+      cachePath,
+      imagesConfig
+    })
+  } catch (err) {
     console.error('Error processing image!', image, context)
     throw err
-    }
+  }
 }
 
