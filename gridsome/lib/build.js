@@ -73,7 +73,7 @@ async function runWebpack (app) {
 async function renderHTML (renderQueue, app, hash, config) {
   const { createWorker } = require('./workers')
   const timer = hirestime()
-  const concurrency = config.render.concurrency || sysinfo.cpus.physical
+  const concurrency = config.renderConcurrency || sysinfo.cpus.physical
   const worker = createWorker('html-writer', { numWorkers: concurrency })
   const { htmlTemplate, clientManifestPath, serverBundlePath, prefetch, preload } = app.config
   
@@ -147,7 +147,7 @@ async function processImages (images, config) {
   const { createWorker } = require('./workers')
   const timer = hirestime()
 
-  const concurrency = config.images.concurrency || sysinfo.cpus.physical
+  const concurrency = config.imageConcurrency || sysinfo.cpus.physical
   const worker = createWorker('image-processor', { numWorkers: concurrency })
   const total = images.queue.length
   let done = 0
