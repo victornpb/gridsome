@@ -1,7 +1,5 @@
 const fs = require('fs-extra')
-const pMap = require('p-map')
 const hirestime = require('hirestime')
-const { chunk } = require('lodash')
 const sysinfo = require('./utils/sysinfo')
 const executeQueries = require('./app/build/executeQueries')
 const createRenderQueue = require('./app/build/createRenderQueue')
@@ -78,12 +76,12 @@ async function renderHTML (renderQueue, app, hash, config) {
   const concurrency = config.render.concurrency || sysinfo.cpus.physical
   const worker = createWorker('html-writer', { numWorkers: concurrency })
   const { htmlTemplate, clientManifestPath, serverBundlePath, prefetch, preload } = app.config
-
+  
   let done = 0
   const total = renderQueue.length
   const progress = (done,total) => writeLine(`${((done / total) * 100).toFixed(2)}% - Processing pages... (${done} / ${total} pages)`)
 
-    try {
+  try {
     progress(done, total)
     
     await parallel(renderQueue, async (page) => {
@@ -99,11 +97,11 @@ async function renderHTML (renderQueue, app, hash, config) {
       progress(done, total)
     }, concurrency)
 
-    } catch (err) {
+  } catch (err) {
     throw err
   } finally {
-      worker.end()
-    }
+    worker.end()
+  }
 
   info(`Render HTML (${renderQueue.length} files) - ${timer(hirestime.S)}s`)
 }
