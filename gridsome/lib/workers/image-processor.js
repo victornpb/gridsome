@@ -7,7 +7,6 @@ const colorString = require('color-string')
 const imageminWebp = require('imagemin-webp')
 const imageminMozjpeg = require('imagemin-mozjpeg')
 const imageminPngquant = require('imagemin-pngquant')
-const sysinfo = require('../utils/sysinfo')
 const { warmupSharp } = require('../utils/sharp')
 
 exports.processImage = async function ({
