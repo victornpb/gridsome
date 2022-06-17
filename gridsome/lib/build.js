@@ -28,7 +28,7 @@ module.exports = async (context, args) => {
   const redirects = app.hooks.redirects.call([], queue)
 
   await executeQueries(queue, app, hashString)
-  await renderHTML(queue, app, hashString)
+  await renderHTML(queue, app, hashString, app.config)
   await processFiles(app.assets.files)
   await processImages(app.assets.images, app.config)
 
@@ -72,30 +72,38 @@ async function runWebpack (app) {
   return stats
 }
 
-async function renderHTML (renderQueue, app, hash) {
+async function renderHTML (renderQueue, app, hash, config) {
   const { createWorker } = require('./workers')
   const timer = hirestime()
-  const worker = createWorker('html-writer')
+  const concurrency = config.render.concurrency || sysinfo.cpus.physical
+  const worker = createWorker('html-writer', { numWorkers: concurrency })
   const { htmlTemplate, clientManifestPath, serverBundlePath, prefetch, preload } = app.config
 
-  await Promise.all(chunk(renderQueue, 350).map(async pages => {
+  let done = 0
+  const total = renderQueue.length
+  const progress = (done,total) => writeLine(`${((done / total) * 100).toFixed(2)}% - Processing pages... (${done} / ${total} pages)`)
+
     try {
+    progress(done, total)
+    
+    await parallel(renderQueue, async (page) => {
       await worker.render({
         hash,
-        pages,
+        page,
         htmlTemplate,
         clientManifestPath,
         serverBundlePath,
         prefetch,
         preload
       })
-    } catch (err) {
-      worker.end()
-      throw err
-    }
-  }))
+      progress(done, total)
+    }, concurrency)
 
-  worker.end()
+    } catch (err) {
+    throw err
+  } finally {
+      worker.end()
+    }
 
   info(`Render HTML (${renderQueue.length} files) - ${timer(hirestime.S)}s`)
 }
